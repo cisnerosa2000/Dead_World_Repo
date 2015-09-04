@@ -1,4 +1,5 @@
 from Tkinter import *
+import math
 
 root = Tk()
 root.title('Scrolling!')
@@ -26,7 +27,24 @@ canvas.config(xscrollcommand=hbar.set,yscrollcommand=vbar.set)
 
 ### setting up canvas and window
 
-
+class Bullet(object):
+    def __init__(self,sx,sy,nd):        
+        mv = [sx - nd[0],sy-nd[1]]
+        m1 = math.sqrt(mv[0] ** 2)
+        m2 = math.sqrt(mv[1] ** 2)
+        
+        mag = math.sqrt(m1+m2)
+        
+        norm = [mv[0]/mag,mv[1]/mag]
+        
+        
+        
+        self.velocity = [norm[0]*-1,norm[1]*-1]
+        self.bimg = canvas.create_oval(sx-10,sy-10,sx+10,sy+10)
+        
+        
+        
+        
 class Level(object):
     def __init__(self,file):
         self.t1 = PhotoImage(file='border.gif')
@@ -36,7 +54,7 @@ class Level(object):
         
         
         self.center = [3008,1856]
-        canvas.xview_scroll(672, "units")
+        canvas.xview_scroll(600, "units")
         canvas.yview_scroll(384, "units")
         
     
@@ -101,22 +119,18 @@ class Player(object):
         self.coords = coords
         self.avatar = canvas.create_image(*self.coords,image=self.p)
         
-        self.c_img = PhotoImage(file='ch.gif')
-        self.mx,self.my = canvas.winfo_pointerxy()
-        self.mx = canvas.canvasx(self.mx)
-        self.my = canvas.canvasy(self.my)
-       
-        self.cursor = canvas.create_image(self.mx,self.my,image=self.c_img)        
         
+        self.bul_ls = []
+              
         
         
         self.update()
+        self.bullet_loop()
     def update(self):
         
         #remove this later, this is ONLY for visualing/debugging bullet travel
         self.mx = canvas.canvasx(canvas.winfo_pointerx()) - 62
         self.my = canvas.canvasy(canvas.winfo_pointery()) - 50
-        canvas.coords(self.cursor,self.mx,self.my)
         #remove this later, this is ONLY for visualing/debugging bullet travel
         
         
@@ -198,6 +212,27 @@ class Player(object):
     def fire(self,event):
         st = canvas.coords(self.avatar)
         nd = [self.mx,self.my]
+        
+        bullet = Bullet(sx=st[0],sy=st[1],nd=nd)
+        self.bul_ls.append(bullet)
+    def bullet_loop(self):
+        for b in self.bul_ls:
+            canvas.move(b.bimg,b.velocity[0],b.velocity[1])
+            b.c = canvas.coords(b.bimg)
+            cc = canvas.coords(self.avatar)
+            
+            mv = [(b.c[0]-cc[0])**2,(b.c[1]-cc[1])**2]
+            mag = math.sqrt(mv[0]+mv[1])
+            
+            if mag >= 300:
+                canvas.delete(b.bimg)
+                self.bul_ls.remove(b)
+            
+            
+        root.after(1,self.bullet_loop)
+        
+        
+        
 
 
     
